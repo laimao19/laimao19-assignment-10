@@ -1,21 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LSA Search Engine</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>Image Search</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>Latent Semantic Analysis (LSA) Search Engine</h1>
-    <form id="search-form">
-        <input type="text" id="query" placeholder="Enter search query" required>
-        <button type="submit">Search</button>
-    </form>
+    <div class="container">
+        <h1>Image Search</h1>
+        
+        <form id="search-form">
+            <div class="input-group">
+                <input type="text" id="query" placeholder="Enter text query...">
+                <input type="file" id="image-input" accept="image/*">
+                <label for="image-input" class="file-label">Upload Image</label>
+            </div>
+            
+            <div class="slider-group">
+                <label>
+                    Text Weight: <span id="weight-value">0.5</span>
+                    <input type="range" id="weight-slider" min="0" max="1" step="0.1" value="0.5">
+                </label>
+                <label>
+                    PCA Components: <span id="pca-value">10</span>
+                    <input type="range" id="pca-slider" min="1" max="50" value="10">
+                </label>
+            </div>
 
-    <div id="results"></div>
-    <canvas id="similarity-chart"></canvas>
+            <button type="submit">Search</button>
+        </form>
 
-    <script src="/static/main.js"></script>
+        <div id="results"></div>
+        <div id="error" class="error"></div>
+    </div>
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
 </body>
 </html>
