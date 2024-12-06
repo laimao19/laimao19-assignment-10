@@ -63,6 +63,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
  });
  
+ document.querySelector('.browse-button').addEventListener('click', () => {
+    document.getElementById('image-input').click();
+});
+
+document.getElementById('image-input').addEventListener('change', (e) => {
+    const filename = e.target.files[0]?.name || '';
+    document.getElementById('filename-display').value = filename;
+});
+
  function displayResults(results) {
     const resultsDiv = document.getElementById('results');
     resultsDiv.innerHTML = '';
