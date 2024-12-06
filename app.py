@@ -21,20 +21,24 @@ model = model.to(device)
 df = pd.read_pickle('image_embeddings.pickle')
 embeddings_array = np.array(df['embedding'].tolist())
 image_embeddings = torch.tensor(embeddings_array).to(device)
+
+# Initialize and fit PCA
 pca = PCA(n_components=50)
 pca_embeddings = pca.fit_transform(embeddings_array)
 
 def get_top_k_similar(query_embedding, k=5, use_pca=False, num_components=10):
     with torch.no_grad():
         if use_pca:
-            # Transform query to PCA space
+            # Transform query to PCA space - handle both single and batch embeddings
             query_np = query_embedding.cpu().numpy()
+            if len(query_np.shape) == 1:
+                query_np = query_np.reshape(1, -1)
             query_pca = pca.transform(query_np)[:, :num_components]
             query_pca = torch.tensor(query_pca).to(device)
             db_pca = torch.tensor(pca_embeddings[:, :num_components]).to(device)
-            similarities = F.cosine_similarity(query_pca, db_pca)
+            similarities = F.cosine_similarity(query_pca.squeeze(), db_pca)
         else:
-            similarities = F.cosine_similarity(query_embedding, image_embeddings)
+            similarities = F.cosine_similarity(query_embedding.squeeze(), image_embeddings)
         
         top_k = similarities.topk(k)
         results = []
@@ -65,21 +69,19 @@ def search():
             image = preprocess(Image.open(request.files['image_query'])).unsqueeze(0).to(device)
             image_embedding = F.normalize(model.encode_image(image))
             
-            if use_pca:
-                image_embedding = torch.tensor(pca.transform(
-                    image_embedding.cpu().numpy())[:,:num_components]).to(device)
-            
             if query_embedding is not None:
+                # For hybrid queries, combine before PCA
                 query_embedding = F.normalize(
                     text_weight * text_embedding + 
                     (1.0 - text_weight) * image_embedding
                 )
             else:
                 query_embedding = image_embedding
-
+        
+        # Apply PCA after combining embeddings for hybrid queries
         results = get_top_k_similar(query_embedding, use_pca=use_pca, num_components=num_components)
         return jsonify({'results': results})
-    
+        
     except Exception as e:
         print(f"Error: {str(e)}")
         return jsonify({'error': str(e)}), 500
